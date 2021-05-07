@@ -1,0 +1,4 @@
+.vscode
+__pycache__/
+.ipynb_checkpoints/
+cifar-10-batches-py
