@@ -78,15 +78,15 @@ Test labels shape:  (10000,)
 ### 6. 使用两层循环嵌套计算距离
 
 ```python
-        for i in range(num_test):
-            for j in range(num_train):
-                # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+for i in range(num_test):
+    for j in range(num_train):
+        # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-                diff = np.square(X[i] - self.X_train[j])
-                dists[i][j] = np.sum(diff)
+        diff = np.square(X[i] - self.X_train[j])
+        dists[i][j] = np.sum(diff)
 
-                # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-        return dists
+        # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+return dists
 ```
 
 运行代码，通过 htop 简单查看可以发现只使用了一个 CPU 核心
@@ -100,28 +100,28 @@ Test labels shape:  (10000,)
 ### 8.分别使用 K=1 和 K=5 分类
 
 ```python
-            # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+# *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            index_lbl = np.argsort(dists[i][:])[:k] #截取前K个最近的点
-            closest_y = self.y_train[index_lbl]
+index_lbl = np.argsort(dists[i][:])[:k] #截取前K个最近的点
+closest_y = self.y_train[index_lbl]
 
-            # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+# *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+# *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            dic = {}
-            for label in closest_y:
-                if label in dic.keys():
-                    dic[label] += 1
-                else:
-                    dic[label] = 1
+dic = {}
+for label in closest_y:
+    if label in dic.keys():
+        dic[label] += 1
+    else:
+        dic[label] = 1
 
-            values = list(dic.values())
-            keys = list(dic.keys())
+values = list(dic.values())
+keys = list(dic.keys())
 
-            y_pred[i] = keys[values.index(max(values))]
+y_pred[i] = keys[values.index(max(values))]
 
-            # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+# *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 ```
 
 ![](KNN_1.png)
@@ -177,17 +177,83 @@ k_choices = [n for n  in range(1,20)]
 - 图片转为一维向量
 - 输入特征归一化
 
+![](SVM_AVG.png)
+
 ### 2. 计算梯度
 
 其实可以与损失一起计算
 
-### 3.使用验证集调整超参数，获得 0.39 左右的分类精度(0.385)
 
+```python
+# *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+for i in range(num_train):
+    scores = X[i].dot(W)
+    correct_class_score = scores[y[i]]
+    for j in range(num_classes):
+        if j == y[i]:
+            continue
+        margin = scores[j] - correct_class_score + 1  # note delta = 1
+        if margin > 0:
+            dW[:, y[i]] += -X[i, :]
+            dW[:, j] += X[i, :]
+dW /= num_train
+dW += 2 * reg * W
+# *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+```
+
+### 3.损失函数向量化
+
+### 4.随机梯度下降(SGD)
+
+使用随机梯度下降获得权重，1500次随机操作后，损失情况
+
+![](SVM_1.jpg)
+
+### 5.使用验证集调整超参数，获得 0.39 左右的分类精度(0.385)
+
+
+![](SVM_2.png)
+
+```
 overflow encountered in double_scalars
+```
 
 使用 scipy.special.logsumexp 函数处理很小的数值，防止溢出.
 
 调整超参数后上述问题不再复现
+
+### 6.权重可视化
+
+![](SVM_3.png)
+
+每个图像都被其他类型的图像“平均了”。因为这个结果是整体训练集和权重的产物，是全局的最优解。
+
+## Softmax
+
+### 1.数据预处理
+
+### 2.循环计算交叉熵损失
+
+图像种类有10种，每种图像的数量点相同，损失期望为$-log(\frac{1}{10})$
+
+```
+loss: 2.355027
+sanity check: 2.302585
+```
+
+合理
+
+### 3.验证loss和grad
+
+### 4.向量化Softmax并验证
+
+### 5.调整超参数
+
+best validation accuracy achieved during cross-validation: 0.350000
+
+### 6.可视化权重
+
+![](Softmax_0.png)
 
 ## Two-Layer Neural Network
 
